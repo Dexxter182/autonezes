@@ -114,7 +114,8 @@ window.TRIP = {
     'Próbaút: futómű, fékek, zajok',
     'Próbaút: morajlás 40–80 km/h között (motor-reduktor csapágy), kopogás gázadáskor és visszavételkor',
     'Volt-e már csapágy- vagy motorcsere? Ha igen, számla',
-    'Alvázszám és forgalmi fotó az előélet-lekérdezéshez'
+    'Alvázszám és forgalmi fotó az előélet-lekérdezéshez',
+    'App-os fűtés: van-e Bluelink (Hyundai) vagy Kia Connect / UVO (Kia) a menüben, aktív-e, meddig ingyenes; próba: az eladó telefonjáról indítsa el a fűtést'
   ]
 };
 
