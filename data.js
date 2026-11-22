@@ -4,6 +4,9 @@
 const IMG = (ad, img) => (window.PHOTOS && window.PHOTOS[ad]) || `img/${ad}.jpg`;
 const NAV = (dest) => `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${encodeURIComponent(dest)}`;
 
+// Közös mentés: a Google Sheethez kötött Apps Script webalkalmazás /exec URL-je (lásd apps-script/Code.gs). Üresen csak helyben ment.
+window.SYNC_URL = '';
+
 window.TRIP = {
   title: 'Autónézés',
   date: '2026-11-23',

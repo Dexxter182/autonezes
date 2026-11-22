@@ -17,9 +17,17 @@ Telefonra szabott, statikus webapp a hétfői autónézéshez.
 
 Az `index.html` egyetlen fájl: az adatok és a fotók be vannak ágyazva, a tartalom előre ki van rajzolva, így JavaScript nélkül is olvasható. Szerkesztés után futtasd: `./build.sh`.
 
-## Mentés
+## Közös mentés
 
-A pipák, jegyzetek és saját pontok a böngésző `localStorage`-ában mentődnek, eszközönként külön. A Táblázat fülön a „Jegyzetek megosztása” gombbal szövegként átküldhetők.
+A pipák, a „Megjegyzésünk” mezők, a saját pontok és a státuszok a közös Google Sheet `AppState` lapjára mentődnek egy Apps Script webalkalmazáson keresztül. Az app 15 másodpercenként és minden visszaváltáskor frissít. Offline is lehet pipálni: az app helyben megjegyzi, és amint van net, elküldi. A fejlécben a jelző mutatja az állapotot (Közösen mentve / Mentés… / Offline).
+
+Beállítás (egyszer):
+
+1. A Sheetben: Bővítmények → Apps Script. A `Code.gs` tartalmát cseréld le az `apps-script/Code.gs` tartalmára, majd mentsd.
+2. Telepítés → Új telepítés → típus: Webalkalmazás. Végrehajtás: saját magam. Hozzáférés: Bárki. Telepítés, majd engedélyezd a hozzáférést.
+3. A kapott `https://script.google.com/macros/s/.../exec` URL kerüljön a `data.js` elejére (`window.SYNC_URL`), utána `./build.sh` és push.
+
+Ha a `SYNC_URL` üres, az app csak a saját böngészőben ment.
 
 ## Hosting
 
