@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#284a2c">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Autónézés</title>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  /* Telefonos app: fejléc, középen lapozható kártyák, alul fülsor */
+  :root {
+    --bg: #eef1ec; --card: #ffffff; --ink: #172017; --muted: #5d6a5e; --line: #dce2d8;
+    --acc: #2f5a33; --acc-ink: #ffffff; --acc-soft: #e3eee1; --head: #284a2c;
+    --warn: #8a5a00; --warn-soft: #fff3d6; --done: #2f7d3a; --red: #b03a2e;
+    --radius: 18px; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(20,40,20,.08);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f130f; --card: #1a201a; --ink: #e8ede6; --muted: #9aa79b; --line: #2b342b;
+      --acc: #8fcb8f; --acc-ink: #0f1f10; --acc-soft: #1f2e21; --head: #172418;
+      --warn: #f2c25e; --warn-soft: #2c2514; --done: #7fd18a; --red: #e0705f;
+      --shadow: none; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f130f; --card: #1a201a; --ink: #e8ede6; --muted: #9aa79b; --line: #2b342b;
+    --acc: #8fcb8f; --acc-ink: #0f1f10; --acc-soft: #1f2e21; --head: #172418;
+    --warn: #f2c25e; --warn-soft: #2c2514; --done: #7fd18a; --red: #e0705f;
+    --shadow: none; color-scheme: dark;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 var(--font); }
+  a { color: var(--acc); }
+  h2, h3 { text-wrap: balance; }
+  button { font: inherit; }
+  :focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
+
+  /* ---- Váz ---- */
+  header.top { background: var(--head); color: #fff; padding: calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); }
+  header.top h1 { margin: 0; font-size: 17px; letter-spacing: .01em; }
+  header.top p { margin: 1px 0 0; font-size: 12.5px; opacity: .8; }
+  .view { padding-bottom: 16px; }
+  .viewtitle { padding: 14px 16px 0; margin: 0; font-size: 18px; }
+  nav.tabs { display: none; }
+
+  .js body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  .js main { flex: 1; min-height: 0; position: relative; }
+  .js .view { position: absolute; inset: 0; display: none; flex-direction: column; padding: 0; }
+  .js .view.active { display: flex; }
+  .js .viewtitle.nojs { display: none; }
+  .js nav.tabs { display: flex; background: var(--card); border-top: 1px solid var(--line); padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+  nav.tabs button { flex: 1; border: 0; background: none; color: var(--muted); padding: 8px 4px 9px; font-size: 12px; font-weight: 650; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+  nav.tabs button svg { width: 24px; height: 24px; }
+  nav.tabs button.on { color: var(--acc); }
+
+  /* ---- Lépésjelző ---- */
+  .steps { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; scrollbar-width: none; flex: none; }
+  .steps::-webkit-scrollbar { display: none; }
+  .steps a { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px 6px 6px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 650; white-space: nowrap; }
+  .steps a .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--acc-soft); color: var(--acc); font-size: 12px; }
+  .steps a.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+  .steps a.on .dot { background: var(--acc-ink); color: var(--acc); }
+  .steps a.done .dot { background: var(--done); color: #fff; }
+
+  /* ---- Lapozható pakli ---- */
+  .deck { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; align-items: flex-start; }
+  .deck::-webkit-scrollbar { display: none; }
+  .slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; padding: 4px 16px 20px; }
+  .js .deck { flex: 1; min-height: 0; align-items: stretch; }
+  .js .slide { overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .stepbar { display: none; }
+  .js .stepbar { display: flex; flex: none; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--bg); }
+  .stepbar button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 0; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  .stepbar button.next { align-items: flex-end; background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+  .stepbar button small { font-size: 11px; opacity: .75; font-weight: 600; }
+  .stepbar button span { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .stepbar button[disabled] { opacity: .35; }
+
+  /* ---- Kártyák ---- */
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-top: 12px; }
+  .hero { display: flex; gap: 14px; align-items: center; margin-top: 4px; }
+  .badge { flex: none; width: 52px; height: 52px; border-radius: 16px; background: var(--acc); color: var(--acc-ink); display: grid; place-items: center; font-size: 24px; font-weight: 800; }
+  .badge.home { background: var(--red); color: #fff; }
+  .hero .time { font-size: 13px; font-weight: 750; color: var(--acc); letter-spacing: .02em; }
+  .hero h2 { margin: 0; font-size: 24px; line-height: 1.15; }
+  .hero .leg { font-size: 12.5px; color: var(--muted); }
+  .addr { font-size: 15px; margin: 12px 0 2px; }
+  .who { font-size: 13.5px; color: var(--muted); }
+  .phone-txt { font-variant-numeric: tabular-nums; font-weight: 650; user-select: all; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .actions.three { grid-template-columns: 1fr 1fr 1fr; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; font-size: 14.5px; font-weight: 700; cursor: pointer; text-align: center; line-height: 1.15; }
+  .actions > * { min-width: 0; }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+  .btn.primary { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+  .btn.wide { grid-column: 1 / -1; }
+  .btn.danger { color: var(--red); }
+  .warnbox { background: var(--warn-soft); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
+  .warnbox h3 { margin: 0 0 2px; font-size: 14px; color: var(--warn); }
+  .sectionlabel { font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 22px 2px 0; }
+  #map { height: 260px; border-radius: 14px; border: 1px solid var(--line); margin-top: 12px; background: var(--acc-soft); }
+  #map p { margin: 0; padding: 14px; font-size: 13px; color: var(--muted); }
+
+  /* ---- Autókártya ---- */
+  .carcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-top: 12px; }
+  .carcard .photo { display: block; position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: var(--line); }
+  .carcard .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .carcard .tag { position: absolute; left: 10px; top: 10px; background: var(--acc); color: var(--acc-ink); font-weight: 800; padding: 4px 11px; border-radius: 999px; font-size: 14px; }
+  .carcard .ext { position: absolute; right: 10px; top: 10px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
+  .carcard .body { padding: 14px 16px 16px; }
+  .carcard h3 { margin: 0; font-size: 19px; line-height: 1.2; }
+  .carcard .sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .carcard .price { font-size: 26px; font-weight: 800; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .carcard .price small { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .fact { background: var(--bg); border-radius: 12px; padding: 8px 10px; min-width: 0; }
+  .fact b { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .fact span { font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
+  .fact.ok span { color: var(--done); }
+  .fact.unk span { color: var(--muted); font-weight: 500; }
+  .mynote { background: var(--acc-soft); border-left: 4px solid var(--acc); padding: 9px 12px; border-radius: 8px; font-size: 14.5px; margin-top: 12px; }
+  .summary { font-size: 14.5px; margin: 12px 0 0; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; user-select: all; }
+  details.more { margin-top: 10px; }
+  details.more summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--acc); }
+  details.more p { font-size: 14px; margin: 6px 0 0; }
+
+  /* ---- Checklist ---- */
+  .checks { list-style: none; margin: 4px 0 0; padding: 0; }
+  .checks li label { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 15px; }
+  .warnbox .checks li label { border-color: rgba(0,0,0,.08); }
+  .checks li:last-child label { border-bottom: 0; }
+  .checks input[type=checkbox] { flex: none; width: 24px; height: 24px; margin: 0; accent-color: var(--done); }
+  .checks input:checked + span { color: var(--muted); text-decoration: line-through; }
+  .ccheck { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+  .ccheck > summary { list-style: none; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .ccheck > summary::-webkit-details-marker { display: none; }
+  .ccheck > summary::after { content: '▸'; margin-left: auto; color: var(--muted); }
+  .ccheck[open] > summary::after { content: '▾'; }
+  .ccheck h4 { margin: 0; font-size: 16px; }
+  .count { font-size: 12.5px; color: var(--muted); font-weight: 650; }
+  .progress { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--done); transition: width .2s; }
+  .score { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 6px; }
+  .score button { aspect-ratio: 1; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-weight: 750; font-size: 14px; padding: 0; cursor: pointer; }
+  .score button.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+  label.lbl { display: block; font-size: 12px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 14px; }
+  textarea { width: 100%; min-height: 84px; margin-top: 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 10px 12px; font: inherit; font-size: 16px; resize: vertical; }
+
+  /* ---- Lista ---- */
+  .js #view-list .scroller { flex: 1; min-height: 0; overflow-y: auto; }
+  .filters { display: flex; gap: 6px; padding: 12px 16px 4px; }
+  .filters button { flex: 1; padding: 9px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; }
+  .filters button.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+  .rows { list-style: none; margin: 0; padding: 4px 16px 20px; display: grid; gap: 8px; }
+  .row { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 8px; text-decoration: none; color: var(--ink); }
+  .row img { width: 96px; height: 72px; object-fit: cover; border-radius: 11px; flex: none; background: var(--line); }
+  .row .rt { min-width: 0; flex: 1; }
+  .row .rn { font-weight: 750; font-size: 15px; line-height: 1.2; }
+  .row .rm { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .row .rp { font-weight: 800; font-size: 15px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .row .chip { display: inline-block; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--acc); color: var(--acc-ink); margin-right: 4px; vertical-align: 1px; }
+  .row .chev { color: var(--muted); font-size: 22px; padding-right: 4px; }
+
+  /* ---- Autó-pakli (lista nézetből) ---- */
+  #carview .bar { display: none; }
+  .js #carview { position: fixed; inset: 0; z-index: 2000; background: var(--bg); display: none; flex-direction: column; }
+  .js #carview.open { display: flex; }
+  .js #carview .bar { display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px)); background: var(--head); color: #fff; }
+  #carview .bar button { border: 0; background: rgba(255,255,255,.14); color: #fff; font-weight: 700; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+  #carview .bar .pos { flex: 1; text-align: center; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .js #carview .stepbar { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+
+  /* ---- Táblázat ---- */
+  .js #view-cmp .scroller { flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 20px; }
+  #view-cmp .scroller { padding: 0 16px 20px; }
+  .tablewrap { overflow-x: auto; border-radius: 16px; border: 1px solid var(--line); background: var(--card); margin-top: 12px; }
+  table { border-collapse: collapse; font-size: 13px; width: 100%; }
+  th, td { padding: 8px 9px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tbody th { position: sticky; left: 0; background: var(--card); z-index: 1; color: var(--muted); font-weight: 650; }
+  thead th { background: var(--acc-soft); position: sticky; top: 0; }
+  thead th:first-child { left: 0; z-index: 2; }
+  .note-s { font-size: 12.5px; color: var(--muted); margin: 8px 2px 0; }
+
+  .confirm { display: none; margin-top: 8px; }
+  .confirm.show { display: grid; }
+  .leaflet-div-icon.pin { background: none; border: 0; }
+  .pin span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #2f5a33; color: #fff; font-weight: 800; font-size: 13px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  .pin.start span { background: #b03a2e; }
+  @media (min-width: 720px) {
+    .slide { padding-left: max(16px, calc(50% - 320px)); padding-right: max(16px, calc(50% - 320px)); }
+    .rows { max-width: 720px; margin: 0 auto; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="title">Autónézés</h1>
+  <p id="subtitle"></p>
+</header>
+
+<main>
+  <section class="view active" id="view-trip" aria-label="Út">
+    <h2 class="viewtitle nojs">Út, állomásonként (oldalra lapozható)</h2>
+    <nav class="steps" id="steps" aria-label="Állomások"></nav>
+    <div class="deck" id="tripdeck"></div>
+    <div class="stepbar" id="tripbar">
+      <button type="button" class="prev" id="tripprev"><small>Előző</small><span></span></button>
+      <button type="button" class="next" id="tripnext"><small>Következő</small><span></span></button>
+    </div>
+  </section>
+
+  <section class="view" id="view-list" aria-label="Lista">
+    <h2 class="viewtitle nojs">Autók</h2>
+    <div class="scroller">
+      <div class="filters" id="filters">
+        <button type="button" data-f="trip" class="on">Hétfői kör (6)</button>
+        <button type="button" data-f="all">Mind (<span id="allcount"></span>)</button>
+      </div>
+      <ul class="rows" id="rows"></ul>
+    </div>
+  </section>
+
+  <section class="view" id="view-cmp" aria-label="Táblázat">
+    <div class="scroller">
+      <h2 class="viewtitle" style="padding-left:2px">Összehasonlítás: a hétfői kör</h2>
+      <div class="tablewrap"><table id="cmp"></table></div>
+      <p class="note-s">A „?” azt jelenti, hogy a hirdetés nem adja meg. A saját pontot az autó kártyáján adhatod meg.</p>
+      <div class="actions">
+        <button type="button" class="btn primary" id="share">Jegyzetek megosztása</button>
+        <button type="button" class="btn danger" id="reset">Minden törlése</button>
+        <div class="confirm wide" id="resetconfirm" style="grid-column:1/-1">
+          <p class="note-s" style="margin:0 0 6px">Törlöd az összes pipát, jegyzetet és pontot ezen a telefonon?</p>
+          <div class="actions" style="margin:0"><button type="button" class="btn danger" id="resetyes">Igen, törlöm</button><button type="button" class="btn" id="resetno">Mégse</button></div>
+        </div>
+      </div>
+      <p class="note-s" id="sharemsg"></p>
+    </div>
+  </section>
+</main>
+
+<section id="carview" aria-label="Autó részletei">
+  <h2 class="viewtitle nojs">Autók részletesen (oldalra lapozható)</h2>
+  <div class="bar"><button type="button" id="carclose">‹ Lista</button><div class="pos" id="carpos"></div><span style="width:64px"></span></div>
+  <div class="deck" id="cardeck"></div>
+  <div class="stepbar">
+    <button type="button" class="prev" id="carprev"><small>Előző</small><span></span></button>
+    <button type="button" class="next" id="carnext"><small>Következő</small><span></span></button>
+  </div>
+</section>
+
+<nav class="tabs" aria-label="Fülek">
+  <button type="button" data-v="trip" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 7v13M15 4v13"/></svg>Út</button>
+  <button type="button" data-v="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg>Lista</button>
+  <button type="button" data-v="cmp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg>Táblázat</button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data.js"></script>
+<script src="route.js"></script>
+<script>
+(function () {
+  const T = window.TRIP, CARS = window.CARS;
+  const byId = Object.fromEntries(CARS.map(c => [c.id, c]));
+  const PRERENDER = /[?&]prerender/.test(location.search);
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const NAV = d => 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(d);
+  const tripCars = T.stops.flatMap(s => s.cars).map(id => byId[id]);
+  const stopOf = c => c.stop ? T.stops.find(s => s.n === c.stop) : null;
+  const shortPrice = p => p.split(' (')[0];
+
+  const I = {
+    nav: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>',
+    call: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>',
+    ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>',
+    map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/></svg>'
+  };
+
+  // ---- Mentett állapot (eszközönként, a böngészőben) ----
+  const KEY = 'autonezes-' + T.date;
+  let S = { checks: {}, notes: {}, scores: {}, slide: 0 };
+  if (!PRERENDER) try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+  const save = () => { if (PRERENDER) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+  $('#title').textContent = T.title + ' · ' + T.dateLabel;
+  $('#subtitle').textContent = T.summary;
+
+  // ---- Építőelemek ----
+  const check = (key, text) => '<li><label><input type="checkbox" data-k="' + esc(key) + '"' + (S.checks[key] ? ' checked' : '') + '><span>' + text + '</span></label></li>';
+  const fact = (k, v, cls) => {
+    const unk = !v || /^nincs/.test(v);
+    return '<div class="fact ' + (unk ? 'unk' : (cls || '')) + '"><b>' + esc(k) + '</b><span>' + esc(v || 'nincs megadva') + '</span></div>';
+  };
+  function carCard(c, ctx) {
+    const st = stopOf(c);
+    const keys = T.everyCar.map((_, i) => 'car-' + c.id + '-' + i);
+    const navUrl = st ? st.nav : NAV(c.place);
+    return '<article class="carcard" data-car="' + c.id + '">' +
+      '<a class="photo" href="' + c.url + '" target="_blank" rel="noopener"><img src="' + c.img + '" alt="' + esc(c.name) + '" onerror="this.style.visibility=\'hidden\'">' +
+        (c.tag ? '<span class="tag">' + esc(c.tag) + (c.color ? ' · ' + esc(c.color) : '') + '</span>' : '') +
+        '<span class="ext">hahu ↗</span></a>' +
+      '<div class="body">' +
+        '<h3>' + esc(c.name) + '</h3>' +
+        '<div class="sub">' + esc(c.place) + ' · ' + esc(c.dist) + ' · ' + esc(c.seller) + (st && ctx !== 'stop' ? ' · ' + st.n + '. állomás, ' + esc(st.time) : '') + '</div>' +
+        '<div class="price">' + esc(shortPrice(c.price)) + (c.price.includes('(') ? ' <small>' + esc(c.price.slice(c.price.indexOf('('))) + '</small>' : '') + '</div>' +
+        '<div class="actions">' +
+          '<a class="btn primary wide" href="' + c.url + '" target="_blank" rel="noopener">' + I.ext + 'Hirdetés a hahun</a>' +
+          (ctx !== 'stop' ? (c.phone ? '<a class="btn" href="tel:' + c.phone + '">' + I.call + 'Hívás</a>' : '<span class="btn" aria-disabled="true" style="opacity:.4">' + I.call + 'Nincs szám</span>') +
+            '<a class="btn" href="' + navUrl + '" target="_blank" rel="noopener">' + I.nav + 'Navigáció</a>' : '') +
+        '</div>' +
+        (ctx !== 'stop' && c.phoneLabel ? '<div class="who" style="margin-top:6px">Telefon: <span class="phone-txt">' + esc(c.phoneLabel) + '</span></div>' : '') +
+        (c.note ? '<div class="mynote"><b>Megjegyzés:</b> „' + esc(c.note) + '”</div>' : '') +
+        '<div class="facts">' +
+          fact('Évjárat', c.year) + fact('Km', c.km) +
+          fact('Akku (SOH)', c.soh, /^\d/.test(c.soh) ? 'ok' : '') + fact('Hőszivattyú', c.heatpump, c.heatpump === 'van' ? 'ok' : '') +
+          fact('Műszaki', c.mot) + fact('Rendszám', c.plate) +
+        '</div>' +
+        (c.vin ? '<div class="who" style="margin-top:8px">Alvázszám: <span class="mono">' + esc(c.vin) + '</span></div>' : '') +
+        '<p class="summary">' + esc(c.summary) + '</p>' +
+        '<details class="more"><summary>Hirdetésből</summary><p>' + esc(c.info) + '</p></details>' +
+        (c.stop ? '<details class="ccheck"' + (ctx === 'stop' ? ' open' : '') + '><summary><div><h4>Checklist ennél az autónál</h4><div class="count" data-count="' + c.id + '"></div></div></summary>' +
+            '<div class="progress"><i data-bar="' + c.id + '"></i></div>' +
+            '<ul class="checks">' + T.everyCar.map((t, i) => check(keys[i], esc(t))).join('') + '</ul>' +
+            '<label class="lbl">Saját pont</label><div class="score" data-score="' + c.id + '">' +
+              Array.from({ length: 10 }, (_, i) => '<button type="button" data-v="' + (i + 1) + '"' + (S.scores[c.id] == i + 1 ? ' class="on"' : '') + '>' + (i + 1) + '</button>').join('') + '</div>' +
+            '<label class="lbl" for="n-' + ctx + '-' + c.id + '">Jegyzet</label><textarea id="n-' + ctx + '-' + c.id + '" data-note="' + c.id + '" placeholder="pl. SOH 94%, bal hátsó ajtó 180 µm, alku 6,9 M-ig">' + esc(S.notes[c.id] || '') + '</textarea>' +
+          '</details>' : '') +
+      '</div></article>';
+  }
+
+  // ---- Út: diák ----
+  const slides = [];
+  slides.push({ key: 'start', label: T.start.time + ' Indulás', dot: 'S', html:
+    '<div class="hero"><div class="badge home">S</div><div><div class="time">' + esc(T.start.time) + '</div><h2>' + esc(T.start.name) + '</h2><div class="leg">4 állomás, 6 autó · kb. 151 km</div></div></div>' +
+    '<div id="map" role="img" aria-label="Az útvonal térképe"><p>A térkép böngészőben jelenik meg. Az útvonalat a lenti gomb is megnyitja.</p></div>' +
+    '<div class="actions"><a class="btn primary wide" href="' + T.fullRoute + '" target="_blank" rel="noopener">' + I.map + 'Teljes kör Google Mapsben</a></div>' +
+    '<div class="warnbox"><h3>Tudnivalók</h3>' + T.notes.map(n => '<div style="font-size:14.5px;margin-top:4px">' + esc(n) + '</div>').join('') + '</div>' +
+    '<div class="sectionlabel">Indulás előtt: telefonálj</div><div class="panel" style="padding-top:6px;padding-bottom:6px"><ul class="checks">' +
+      T.stops.map(s => check('call-' + s.n, '<b>' + s.n + '. ' + esc(s.name) + '</b> · <a href="tel:' + s.phone + '" class="phone-txt">' + esc(s.phoneLabel) + '</a><br><span class="who">' + esc(s.call) + '</span>')).join('') +
+    '</ul></div>' +
+    '<div class="sectionlabel">Mit vigyetek</div><div class="panel" style="padding-top:6px;padding-bottom:6px"><ul class="checks">' +
+      T.bring.map((b, i) => check('bring-' + i, esc(b))).join('') + '</ul></div>' });
+  T.stops.forEach((s, idx) => {
+    const from = idx === 0 ? 'Pilisvörösvárról ' + T.start.leg : T.stops[idx - 1].name + ' után ' + T.stops[idx - 1].leg;
+    slides.push({ key: 'stop-' + s.n, label: s.time.split('–')[0] + ' ' + s.name.replace('Budapest ', 'Bp. ').replace(' / Solymár', ''), dot: String(s.n), stop: s, html:
+      '<div class="hero"><div class="badge">' + s.n + '</div><div><div class="time">' + esc(s.time) + '</div><h2>' + esc(s.name) + '</h2><div class="leg">' + esc(from) + '</div></div></div>' +
+      '<div class="addr">' + esc(s.address) + '</div>' +
+      '<div class="who">' + esc(s.who) + '</div>' +
+      '<div class="who" style="margin-top:2px">Telefon: <span class="phone-txt">' + esc(s.phoneLabel) + '</span></div>' +
+      '<div class="actions"><a class="btn primary" href="' + s.nav + '" target="_blank" rel="noopener">' + I.nav + 'Navigáció</a><a class="btn" href="tel:' + s.phone + '">' + I.call + 'Hívás</a></div>' +
+      '<div class="warnbox"><h3>Mire figyeljetek itt</h3><ul class="checks">' + s.watch.map((w, i) => check('stop-' + s.n + '-' + i, esc(w))).join('') + '</ul></div>' +
+      '<div class="sectionlabel">' + (s.cars.length > 1 ? s.cars.length + ' autó ezen az állomáson' : 'Az autó') + '</div>' +
+      s.cars.map(id => carCard(byId[id], 'stop')).join('') });
+  });
+  slides.push({ key: 'end', label: T.end.time.replace('~', 'kb. ') + ' Haza', dot: '⌂', html:
+    '<div class="hero"><div class="badge home">⌂</div><div><div class="time">' + esc(T.end.time) + '</div><h2>' + esc(T.end.name) + '</h2><div class="leg">Biatorbágyról kb. 42 perc, 29 km</div></div></div>' +
+    '<div class="actions"><a class="btn primary wide" href="' + NAV('Pilisvörösvár') + '" target="_blank" rel="noopener">' + I.nav + 'Navigáció haza</a></div>' +
+    '<div class="sectionlabel">Mérleg</div><div class="panel" id="tally"></div>' +
+    '<div class="actions"><button type="button" class="btn wide" data-goto="cmp">Összehasonlító táblázat</button></div>' });
+
+  function renderTrip() {
+    $('#tripdeck').innerHTML = slides.map((s, i) => '<section class="slide" id="slide-' + s.key + '" data-i="' + i + '">' + s.html + '</section>').join('');
+    $('#steps').innerHTML = slides.map((s, i) => '<a href="#slide-' + s.key + '" data-i="' + i + '"><span class="dot">' + esc(s.dot) + '</span>' + esc(s.label) + '</a>').join('');
+  }
+  function renderTally() {
+    const el = $('#tally'); if (!el) return;
+    el.innerHTML = tripCars.map(c => {
+      const d = T.everyCar.filter((_, i) => S.checks['car-' + c.id + '-' + i]).length;
+      return '<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">' +
+        '<span class="chip" style="font-size:12px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--acc);color:var(--acc-ink)">' + esc(c.tag) + '</span>' +
+        '<span style="flex:1;min-width:0;font-size:14px">' + esc(c.name.replace(/ EV 64 kWh/, '').replace(', napfénytetős', '')) + '<br><span class="who">' + esc(shortPrice(c.price)) + ' · checklist ' + d + '/' + T.everyCar.length + '</span></span>' +
+        '<b style="font-size:20px;min-width:28px;text-align:right">' + (S.scores[c.id] || '–') + '</b></div>';
+    }).join('') + '<p class="note-s">Jobb oldalt a saját pont.</p>';
+  }
+
+  // ---- Lista ----
+  let filter = 'trip';
+  const listCars = () => filter === 'trip' ? tripCars : CARS;
+  function renderList() {
+    $('#allcount').textContent = CARS.length;
+    $('#rows').innerHTML = listCars().map((c, i) =>
+      '<li><a class="row" href="#car-' + c.id + '" data-open="' + i + '"><img src="' + c.img + '" alt="" onerror="this.style.visibility=\'hidden\'">' +
+      '<div class="rt"><div class="rn">' + (c.tag ? '<span class="chip">' + esc(c.tag) + '</span>' : '') + esc(c.name.replace(' EV 64 kWh', '')) + '</div>' +
+      '<div class="rm">' + esc(c.year.split(' (')[0]) + ' · ' + esc(c.km) + ' · ' + esc(c.place) + '</div>' +
+      '<div class="rp">' + esc(shortPrice(c.price)) + (S.scores[c.id] ? ' <span class="who">· saját pont: ' + S.scores[c.id] + '</span>' : '') + '</div></div><span class="chev">›</span></a></li>').join('');
+    $('#cardeck').innerHTML = listCars().map((c, i) => '<section class="slide" id="car-' + c.id + '" data-i="' + i + '">' + carCard(c, 'list') + '</section>').join('');
+  }
+
+  // ---- Táblázat ----
+  function renderCmp() {
+    const short = v => (!v || /^nincs/.test(v)) ? '?' : v;
+    const rows = [
+      ['Típus', c => c.name.replace(/(Hyundai|Kia) /, '').replace(' EV 64 kWh', '').replace(', napfénytetős', '')],
+      ['Ár', c => shortPrice(c.price)],
+      ['Évjárat', c => c.year.split(' (')[0]],
+      ['Km', c => c.km],
+      ['Akku (SOH)', c => short(c.soh).replace(' (hirdetés szerint)', ' (hird.)').replace(' (eladó szerint, telefonon)', ' (tel.)').replace(' (Hyundai márkaszerviz mérte)', ' (szerviz)')],
+      ['Hőszivattyú', c => c.heatpump === 'van' ? 'van' : '?'],
+      ['Napfénytető', c => c.sunroof ? 'van' : '–'],
+      ['Műszaki', c => short(c.mot)],
+      ['Eladó', c => /Keresked/.test(c.seller) ? 'kereskedés' : 'magánsz.'],
+      ['Checklist', c => T.everyCar.filter((_, i) => S.checks['car-' + c.id + '-' + i]).length + '/' + T.everyCar.length],
+      ['Saját pont', c => S.scores[c.id] ? String(S.scores[c.id]) : '–']
+    ];
+    $('#cmp').innerHTML = '<thead><tr><th></th>' + tripCars.map(c => '<th>' + esc(c.tag) + ' · ' + esc(c.color ? c.color.split(' ')[0] : stopOf(c).name.replace('Budapest ', 'Bp. ')) + '</th>').join('') + '</tr></thead><tbody>' +
+      rows.map(([k, f]) => '<tr><th>' + esc(k) + '</th>' + tripCars.map(c => '<td>' + (k === 'Saját pont' ? '<b>' + esc(f(c)) + '</b>' : esc(f(c))) + '</td>').join('') + '</tr>').join('') + '</tbody>';
+  }
+
+  function updateCounts() {
+    tripCars.forEach(c => {
+      const n = T.everyCar.length, d = T.everyCar.filter((_, i) => S.checks['car-' + c.id + '-' + i]).length;
+      $$('[data-count="' + c.id + '"]').forEach(el => el.textContent = d + ' / ' + n + ' kész' + (S.scores[c.id] ? ' · saját pont: ' + S.scores[c.id] : ''));
+      $$('[data-bar="' + c.id + '"]').forEach(el => el.style.width = (100 * d / n) + '%');
+    });
+    // állomás kész, ha minden autójának checklistje és a "mire figyeljetek" lista kész
+    $$('#steps a').forEach(a => {
+      const s = slides[+a.dataset.i].stop; if (!s) return;
+      const keys = s.watch.map((_, i) => 'stop-' + s.n + '-' + i).concat(s.cars.flatMap(id => T.everyCar.map((_, i) => 'car-' + id + '-' + i)));
+      a.classList.toggle('done', keys.every(k => S.checks[k]));
+    });
+    renderTally();
+  }
+
+  // ---- Indulás: kirajzolás (a prerender is ezt menti el) ----
+  renderTrip(); renderList(); renderCmp(); updateCounts();
+  if (PRERENDER) return;
+
+  // ---- Lapozás ----
+  function deckCtl(deck, prev, next, labelOf, onChange) {
+    let cur = 0;
+    const count = () => deck.children.length;
+    const go = (i, smooth = true) => {
+      i = Math.max(0, Math.min(count() - 1, i));
+      deck.scrollTo({ left: i * deck.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
+      set(i);
+    };
+    const set = i => {
+      if (i === cur && prev.dataset.init) return;
+      cur = i; prev.dataset.init = 1;
+      prev.disabled = i === 0; next.disabled = i === count() - 1;
+      prev.querySelector('span').textContent = i > 0 ? labelOf(i - 1) : '';
+      next.querySelector('span').textContent = i < count() - 1 ? labelOf(i + 1) : '';
+      onChange && onChange(i);
+    };
+    let t;
+    deck.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => set(Math.round(deck.scrollLeft / deck.clientWidth)), 60); }, { passive: true });
+    prev.addEventListener('click', () => go(cur - 1));
+    next.addEventListener('click', () => go(cur + 1));
+    window.addEventListener('resize', () => go(cur, false));
+    return { go, get cur() { return cur; } };
+  }
+
+  const trip = deckCtl($('#tripdeck'), $('#tripprev'), $('#tripnext'), i => slides[i].label, i => {
+    $$('#steps a').forEach(a => a.classList.toggle('on', +a.dataset.i === i));
+    const on = $('#steps a.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    if (i === 0 && map) setTimeout(() => map.invalidateSize(), 50);
+    S.slide = i; save();
+  });
+  $('#steps').addEventListener('click', e => { const a = e.target.closest('a[data-i]'); if (!a) return; e.preventDefault(); trip.go(+a.dataset.i); });
+
+  let carCtl;
+  function openCar(i) {
+    $('#carview').classList.add('open');
+    if (!carCtl) carCtl = deckCtl($('#cardeck'), $('#carprev'), $('#carnext'), j => { const c = listCars()[j]; return (c.tag ? c.tag + ' ' : '') + c.name.replace(/(Hyundai|Kia) /, '').replace(' EV 64 kWh', ''); },
+      j => { $('#carpos').textContent = (j + 1) + ' / ' + listCars().length; });
+    requestAnimationFrame(() => carCtl.go(i, false));
+  }
+  $('#rows').addEventListener('click', e => { const a = e.target.closest('[data-open]'); if (!a) return; e.preventDefault(); openCar(+a.dataset.open); });
+  $('#carclose').addEventListener('click', () => { $('#carview').classList.remove('open'); renderList(); });
+  $('#filters').addEventListener('click', e => {
+    const b = e.target.closest('button[data-f]'); if (!b) return;
+    filter = b.dataset.f; $$('#filters button').forEach(x => x.classList.toggle('on', x === b)); renderList();
+  });
+
+  // ---- Fülek ----
+  function show(v) {
+    $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    $$('main > .view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
+    if (v === 'cmp') renderCmp();
+    if (v === 'list') renderList();
+    if (v === 'trip') requestAnimationFrame(() => trip.go(trip.cur, false));
+  }
+  $$('nav.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.v)));
+  document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) show(g.dataset.goto); });
+
+  // ---- Pipák, pontok, jegyzetek (minden példány szinkronban) ----
+  document.addEventListener('change', e => {
+    const k = e.target.dataset && e.target.dataset.k; if (!k) return;
+    if (e.target.checked) S.checks[k] = true; else delete S.checks[k];
+    $$('[data-k="' + k + '"]').forEach(x => { if (x !== e.target) x.checked = e.target.checked; });
+    save(); updateCounts();
+  });
+  document.addEventListener('input', e => {
+    const id = e.target.dataset && e.target.dataset.note; if (!id) return;
+    S.notes[id] = e.target.value;
+    $$('[data-note="' + id + '"]').forEach(x => { if (x !== e.target) x.value = e.target.value; });
+    save();
+  });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.score button'); if (!b) return;
+    const id = b.parentElement.dataset.score, v = +b.dataset.v;
+    if (S.scores[id] === v) delete S.scores[id]; else S.scores[id] = v;
+    $$('[data-score="' + id + '"] button').forEach(x => x.classList.toggle('on', +x.dataset.v === S.scores[id]));
+    save(); updateCounts();
+  });
+
+  // ---- Megosztás, törlés ----
+  $('#share').addEventListener('click', async () => {
+    const lines = ['Autónézés ' + T.date, ''];
+    tripCars.forEach(c => {
+      const d = T.everyCar.filter((_, i) => S.checks['car-' + c.id + '-' + i]).length;
+      lines.push(c.tag + ') ' + c.name + ' · ' + shortPrice(c.price));
+      lines.push('  Saját pont: ' + (S.scores[c.id] || '-') + ' · checklist: ' + d + '/' + T.everyCar.length);
+      if (S.notes[c.id]) lines.push('  ' + S.notes[c.id].replace(/\n/g, '\n  '));
+      lines.push('  ' + c.url, '');
+    });
+    const text = lines.join('\n');
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Autónézés jegyzetek', text }); return; }
+      await navigator.clipboard.writeText(text); $('#sharemsg').textContent = 'A jegyzetek a vágólapra kerültek.';
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      $('#sharemsg').textContent = 'A megosztás nem sikerült ezen az eszközön.';
+    }
+  });
+  $('#reset').addEventListener('click', () => $('#resetconfirm').classList.add('show'));
+  $('#resetno').addEventListener('click', () => $('#resetconfirm').classList.remove('show'));
+  $('#resetyes').addEventListener('click', () => {
+    S = { checks: {}, notes: {}, scores: {}, slide: 0 }; save();
+    $('#resetconfirm').classList.remove('show');
+    renderTrip(); renderList(); renderCmp(); initMap(); updateCounts(); trip.go(0, false);
+  });
+
+  // ---- Térkép ----
+  let map;
+  function initMap() {
+    const el = $('#map'); if (!el || !window.L) return;
+    if (map) { map.remove(); map = null; }
+    el.innerHTML = '';
+    map = L.map(el, { zoomControl: true, attributionControl: true });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+    const line = L.polyline(window.ROUTE || [], { color: '#2f5a33', weight: 5, opacity: .85 }).addTo(map);
+    const pin = (lat, lon, txt, cls, i) => L.marker([lat, lon], { icon: L.divIcon({ className: 'pin ' + cls, html: '<span>' + txt + '</span>', iconSize: [26, 26], iconAnchor: [13, 13] }) }).addTo(map).on('click', () => trip.go(i));
+    pin(T.start.lat, T.start.lon, 'S', 'start', 0);
+    T.stops.forEach((s, idx) => pin(s.lat, s.lon, s.n, '', idx + 1));
+    map.fitBounds(line.getBounds(), { padding: [16, 16] });
+  }
+  initMap();
+
+  // utolsó állás visszaállítása
+  requestAnimationFrame(() => trip.go(S.slide || 0, false));
+})();
+</script>
+</body>
+</html>
