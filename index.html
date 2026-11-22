@@ -294,7 +294,7 @@ const IMG = (ad, img) => (window.PHOTOS && window.PHOTOS[ad]) || `img/${ad}.jpg`
 const NAV = (dest) => `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${encodeURIComponent(dest)}`;
 
 // Közös mentés: a Google Sheethez kötött Apps Script webalkalmazás /exec URL-je (lásd apps-script/Code.gs). Üresen csak helyben ment.
-window.SYNC_URL = '';
+window.SYNC_URL = 'https://script.google.com/macros/s/AKfycbxZQFx2n5H5Sq1phnQSJ7Tta27Pmi1zuoM-CEXLAScF6GaV0Nc3xWJMsXqJsUcTgHoNGA/exec';
 
 window.TRIP = {
   title: 'Autónézés',
