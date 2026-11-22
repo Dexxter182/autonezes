@@ -285,6 +285,47 @@ window.CARS = [
     note: 'a szervíz könyv alapján több gazdás? egyébként szép',
     info: '11 kW 3 fázis, Harman/Kardon, 2 kulcs, friss vizsga.',
     summary: 'Műszakilag az egyik legjobb Soul: 98%-os akku, hőszivattyú, háromfázisú töltés. Hátránya a 226 km-es távolság.'
+  },
+
+  // --- 2026-11-22-én felvett új autók ---
+  {
+    id: '23760912', status: 'új', added: '2026-11-22', stop: null, tag: '', color: 'ezüst metál',
+    name: 'Hyundai Kona EV 64 kWh Premium',
+    url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_premium_bor_3_fazis_ulesszelloztetes_krell-23760912',
+    img: IMG('23760912', '34230734'),
+    price: '7 598 000 Ft', year: '2020/12', km: '84 099 km', soh: 'nincs megadva',
+    heatpump: 'nincs jelölve', mot: '2028/11', seller: 'Kereskedés (Szentlőrinci autóudvar)', place: 'Budapest XXIII., Maros utca 204', dist: '33 km',
+    phone: '+36302579196', phoneLabel: '(+36) 30/257 9196 (másik: 30/754 6079)',
+    plate: '', vin: '', sunroof: false,
+    note: '',
+    info: 'Ezüst metál, kitűnő állapot. Bőr elektromos ülések, ülésszellőztetés, első és hátsó ülésfűtés, kormányfűtés, Krell hifi, HUD, LED fényszóró, holttérfigyelő, távolságtartó tempomat, kulcs nélküli nyitás és indítás, vezeték nélküli telefontöltés. Első tulajdonostól, Magyarországon helyezték forgalomba, garantált km. A kereskedő szerint sérülésmentes, egyetlen eleme sem volt fényezve; km- és eredetgarancia, akár 2 év műszaki garancia. Napfénytető nincs. Hétfőn 09:00-tól nyit.',
+    summary: 'Első tulajdonos, magyar, kevés km, teljes felszereltség napfénytető nélkül. Az akku állapota és a hőszivattyú nincs megadva. 7,6 millióval a drágábbak közé tartozik.'
+  },
+  {
+    id: '23615263', status: 'új', added: '2026-11-22', stop: null, tag: '', color: 'szürke metál',
+    name: 'Hyundai Kona EV 64 kWh Comfort',
+    url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_comfort-23615263',
+    img: IMG('23615263', '32396751'),
+    price: '7 599 000 Ft', year: '2020/9', km: '80 263 km', soh: '93% (hirdetés szerint)',
+    heatpump: 'nincs jelölve', mot: '2028/2', seller: 'Kereskedés (Autocentrum16ker Kft)', place: 'Budapest XVI., Szabadföld út 13', dist: '37 km',
+    phone: '+36706725485', phoneLabel: '(+36) 70/672 5485 (másik: 30/566 0737)',
+    plate: 'AE-HU-147 (fotóról)', vin: '', sunroof: false,
+    note: '',
+    info: 'Szürke metál, sérülésmentes. Első ülésfűtés, kormányfűtés, automata klíma, tolatókamera, kulcs nélküli nyitás és indítás, sávtartó, tempomat, Android Auto és Apple CarPlay. Második tulajdonostól, törzskönyvvel, azonnal elvihető. A hirdetés DC csatlakozónak CHAdeMO-t ír. A kereskedő 1 év garanciát ad, szervizes átvizsgálás lehetséges. Nyitva: H–P 9–18, szombat 9–13; a cinkotai HÉV-megállóval szemben.',
+    summary: 'Az akku a hirdetés szerint 93%-os, de alap Comfort felszereltség, ülés- és kormányfűtéssel. 7,6 millióért drága egy Comfortért: a hétfői körben ennyiért Premiumot kaptok. Rá kell kérdezni a CHAdeMO-ra, mert az európai Konán CCS van: lehet elírás vagy importautó.'
+  },
+  {
+    id: '23583830', status: 'új', added: '2026-11-22', stop: null, tag: '', color: 'ezüst metál',
+    name: 'Hyundai Kona EV 64 kWh Premium Edition (facelift)',
+    url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_premium_edition_ledhoszivattyu3_fazisu_toltesaktiv_bluelinknavikrellholtterfigyelo-23583830',
+    img: IMG('23583830', '32010735'),
+    price: '7 499 999 Ft', year: '2022/8', km: '107 200 km', soh: '100% (dokumentummal, hirdetés szerint)',
+    heatpump: 'van', mot: '2027/7', seller: 'Corvin Rent Kft', place: 'Budapest XIII., Béke tér környéke', dist: '18 km',
+    phone: '+36709842704', phoneLabel: '(+36) 70/984 2704',
+    plate: '', vin: '', sunroof: false,
+    note: '',
+    info: 'Facelift, ezüst metál. Hőszivattyú, 11 kW-os háromfázisú AC és 100 kW-os CCS töltés, LED fényszóró, nagy navi, Krell, holttérfigyelő, távolságtartó tempomat, ülés- és kormányfűtés, aktív Bluelink (app-ból fűthető-hűthető). Végig vezetett szervizkönyv, frissen szervizelt, a legfrissebb szoftverrel. SOH 100% és gyári fényezés a hirdetés dokumentumai szerint; megtekintéskor OBD-olvasót adnak. Gyári garancia 2027 augusztusáig, az akkura 2030 augusztusáig. Az eladó szerint egyes elemeken erősebb használati nyomok vannak, hiányzik a kalaptartó, és egy guminyomás-szenzorban elemet kell cserélni. Előre egyeztetett időpontban nézhető meg a XIII. kerületben.',
+    summary: 'A legfiatalabb Kona a listán (2022/8, facelift): hőszivattyú, 11 kW, dokumentált 100%-os akku, gyári garancia 2027-ig, akkugarancia 2030-ig, és közel van. A 107e km sok 3 évhez, és egy „Rent” cég hirdeti: rá kell kérdezni, bérautó volt-e. A használati nyomokat élőben kell megnézni.'
   }
 ];
 
