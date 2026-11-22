@@ -16,7 +16,7 @@
   :root {
     --bg: #eef1ec; --card: #ffffff; --ink: #172017; --muted: #5d6a5e; --line: #dce2d8;
     --acc: #2f5a33; --acc-ink: #ffffff; --acc-soft: #e3eee1; --head: #284a2c;
-    --warn: #8a5a00; --warn-soft: #fff3d6; --done: #2f7d3a; --red: #b03a2e;
+    --warn: #8a5a00; --warn-soft: #fff3d6; --new: #1f5fa8; --new-soft: #e2ecf8; --done: #2f7d3a; --red: #b03a2e;
     --radius: 18px; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(20,40,20,.08);
     --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   }
@@ -24,14 +24,14 @@
     :root:not([data-theme="light"]) {
       --bg: #0f130f; --card: #1a201a; --ink: #e8ede6; --muted: #9aa79b; --line: #2b342b;
       --acc: #8fcb8f; --acc-ink: #0f1f10; --acc-soft: #1f2e21; --head: #172418;
-      --warn: #f2c25e; --warn-soft: #2c2514; --done: #7fd18a; --red: #e0705f;
+      --warn: #f2c25e; --warn-soft: #2c2514; --new: #8cb8ee; --new-soft: #1a2636; --done: #7fd18a; --red: #e0705f;
       --shadow: none; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0f130f; --card: #1a201a; --ink: #e8ede6; --muted: #9aa79b; --line: #2b342b;
     --acc: #8fcb8f; --acc-ink: #0f1f10; --acc-soft: #1f2e21; --head: #172418;
-    --warn: #f2c25e; --warn-soft: #2c2514; --done: #7fd18a; --red: #e0705f;
+    --warn: #f2c25e; --warn-soft: #2c2514; --new: #8cb8ee; --new-soft: #1a2636; --done: #7fd18a; --red: #e0705f;
     --shadow: none; color-scheme: dark;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -153,10 +153,26 @@
   label.lbl { display: block; font-size: 12px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 14px; }
   textarea { width: 100%; min-height: 84px; margin-top: 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 10px 12px; font: inherit; font-size: 16px; resize: vertical; }
 
+  /* ---- Státusz ---- */
+  .st { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; letter-spacing: .02em; vertical-align: 1px; white-space: nowrap; }
+  .st[data-s="új"] { background: var(--new-soft); color: var(--new); }
+  .st[data-s="megnézendő"] { background: var(--acc-soft); color: var(--acc); }
+  .st[data-s="felejtős"] { background: var(--warn-soft); color: var(--warn); }
+  .st[data-s="törölt"] { background: var(--line); color: var(--muted); text-decoration: line-through; }
+  .stpick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; }
+  .stpick button { padding: 9px 2px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; }
+  .stpick button.on[data-s="új"] { background: var(--new); border-color: var(--new); color: var(--card); }
+  .stpick button.on[data-s="megnézendő"] { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+  .stpick button.on[data-s="felejtős"] { background: var(--warn); border-color: var(--warn); color: var(--card); }
+  .stpick button.on[data-s="törölt"] { background: var(--muted); border-color: var(--muted); color: var(--card); }
+  .row.gone { opacity: .55; }
+  .carcard .stbadge { position: absolute; left: 10px; bottom: 10px; font-size: 12.5px; padding: 3px 10px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+
   /* ---- Lista ---- */
   .js #view-list .scroller { flex: 1; min-height: 0; overflow-y: auto; }
-  .filters { display: flex; gap: 6px; padding: 12px 16px 4px; }
-  .filters button { flex: 1; padding: 9px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; }
+  .filters { display: flex; gap: 6px; padding: 12px 16px 4px; overflow-x: auto; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filters button { flex: none; white-space: nowrap; padding-left: 12px; padding-right: 12px; padding: 9px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; }
   .filters button.on { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
   .rows { list-style: none; margin: 0; padding: 4px 16px 20px; display: grid; gap: 8px; }
   .row { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 8px; text-decoration: none; color: var(--ink); }
@@ -221,8 +237,7 @@
     <h2 class="viewtitle nojs">Autók</h2>
     <div class="scroller">
       <div class="filters" id="filters">
-        <button type="button" data-f="trip" class="on">Hétfői kör (6)</button>
-        <button type="button" data-f="all">Mind (<span id="allcount"></span>)</button>
+
       </div>
       <ul class="rows" id="rows"></ul>
     </div>
@@ -277,6 +292,10 @@
   const tripCars = T.stops.flatMap(s => s.cars).map(id => byId[id]);
   const stopOf = c => c.stop ? T.stops.find(s => s.n === c.stop) : null;
   const shortPrice = p => p.split(' (')[0];
+  const STS = window.STATUSES;
+  const stOf = c => (S.status && S.status[c.id]) || c.status || 'megnézendő';
+  const stLabel = c => (STS.find(s => s.key === stOf(c)) || { label: stOf(c) }).label;
+  const stChip = (c, cls) => '<span class="st' + (cls ? ' ' + cls : '') + '" data-stchip="' + c.id + '" data-s="' + esc(stOf(c)) + '">' + esc(stLabel(c)) + '</span>';
 
   const I = {
     nav: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>',
@@ -287,7 +306,7 @@
 
   // ---- Mentett állapot (eszközönként, a böngészőben) ----
   const KEY = 'autonezes-' + T.date;
-  let S = { checks: {}, notes: {}, scores: {}, slide: 0 };
+  let S = { checks: {}, notes: {}, scores: {}, status: {}, slide: 0 };
   if (!PRERENDER) try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
   const save = () => { if (PRERENDER) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
@@ -307,7 +326,7 @@
     return '<article class="carcard" data-car="' + c.id + '">' +
       '<a class="photo" href="' + c.url + '" target="_blank" rel="noopener"><img src="' + c.img + '" alt="' + esc(c.name) + '" onerror="this.style.visibility=\'hidden\'">' +
         (c.tag ? '<span class="tag">' + esc(c.tag) + (c.color ? ' · ' + esc(c.color) : '') + '</span>' : '') +
-        '<span class="ext">hahu ↗</span></a>' +
+        '<span class="ext">hahu ↗</span>' + stChip(c, 'stbadge') + '</a>' +
       '<div class="body">' +
         '<h3>' + esc(c.name) + '</h3>' +
         '<div class="sub">' + esc(c.place) + ' · ' + esc(c.dist) + ' · ' + esc(c.seller) + (st && ctx !== 'stop' ? ' · ' + st.n + '. állomás, ' + esc(st.time) : '') + '</div>' +
@@ -327,6 +346,8 @@
         (c.vin ? '<div class="who" style="margin-top:8px">Alvázszám: <span class="mono">' + esc(c.vin) + '</span></div>' : '') +
         '<p class="summary">' + esc(c.summary) + '</p>' +
         '<details class="more"><summary>Hirdetésből</summary><p>' + esc(c.info) + '</p></details>' +
+        '<label class="lbl">Státusz</label><div class="stpick" data-stpick="' + c.id + '">' +
+          STS.map(s => '<button type="button" data-s="' + esc(s.key) + '" title="' + esc(s.hint) + '"' + (stOf(c) === s.key ? ' class="on"' : '') + '>' + esc(s.label) + '</button>').join('') + '</div>' +
         (c.stop ? '<details class="ccheck"' + (ctx === 'stop' ? ' open' : '') + '><summary><div><h4>Checklist ennél az autónál</h4><div class="count" data-count="' + c.id + '"></div></div></summary>' +
             '<div class="progress"><i data-bar="' + c.id + '"></i></div>' +
             '<ul class="checks">' + T.everyCar.map((t, i) => check(keys[i], esc(t))).join('') + '</ul>' +
@@ -384,13 +405,18 @@
 
   // ---- Lista ----
   let filter = 'trip';
-  const listCars = () => filter === 'trip' ? tripCars : CARS;
+  const listCars = () => filter === 'trip' ? tripCars.filter(c => stOf(c) !== 'törölt')
+    : filter === 'all' ? CARS
+    : CARS.filter(c => stOf(c) === filter);
   function renderList() {
-    $('#allcount').textContent = CARS.length;
+    const fs = [['trip', 'Hétfői kör', tripCars.filter(c => stOf(c) !== 'törölt').length]]
+      .concat(STS.filter(s => s.key !== 'törölt').map(s => [s.key, s.label, CARS.filter(c => stOf(c) === s.key).length]))
+      .concat([['all', 'Mind', CARS.length]]);
+    $('#filters').innerHTML = fs.map(([k, l, n]) => '<button type="button" data-f="' + esc(k) + '"' + (k === filter ? ' class="on"' : '') + '>' + esc(l) + ' (' + n + ')</button>').join('');
     $('#rows').innerHTML = listCars().map((c, i) =>
-      '<li><a class="row" href="#car-' + c.id + '" data-open="' + i + '"><img src="' + c.img + '" alt="" onerror="this.style.visibility=\'hidden\'">' +
+      '<li><a class="row' + (stOf(c) === 'törölt' ? ' gone' : '') + '" href="#car-' + c.id + '" data-open="' + i + '"><img src="' + c.img + '" alt="" onerror="this.style.visibility=\'hidden\'">' +
       '<div class="rt"><div class="rn">' + (c.tag ? '<span class="chip">' + esc(c.tag) + '</span>' : '') + esc(c.name.replace(' EV 64 kWh', '')) + '</div>' +
-      '<div class="rm">' + esc(c.year.split(' (')[0]) + ' · ' + esc(c.km) + ' · ' + esc(c.place) + '</div>' +
+      '<div class="rm">' + stChip(c) + ' ' + esc(c.year.split(' (')[0]) + ' · ' + esc(c.km) + ' · ' + esc(c.place) + '</div>' +
       '<div class="rp">' + esc(shortPrice(c.price)) + (S.scores[c.id] ? ' <span class="who">· saját pont: ' + S.scores[c.id] + '</span>' : '') + '</div></div><span class="chev">›</span></a></li>').join('');
     $('#cardeck').innerHTML = listCars().map((c, i) => '<section class="slide" id="car-' + c.id + '" data-i="' + i + '">' + carCard(c, 'list') + '</section>').join('');
   }
@@ -478,7 +504,7 @@
   $('#carclose').addEventListener('click', () => { $('#carview').classList.remove('open'); renderList(); });
   $('#filters').addEventListener('click', e => {
     const b = e.target.closest('button[data-f]'); if (!b) return;
-    filter = b.dataset.f; $$('#filters button').forEach(x => x.classList.toggle('on', x === b)); renderList();
+    filter = b.dataset.f; renderList();
   });
 
   // ---- Fülek ----
@@ -513,12 +539,21 @@
     save(); updateCounts();
   });
 
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.stpick button'); if (!b) return;
+    const id = b.parentElement.dataset.stpick, c = byId[id], v = b.dataset.s;
+    if (v === c.status) delete S.status[id]; else S.status[id] = v;
+    $$('[data-stpick="' + id + '"] button').forEach(x => x.classList.toggle('on', x.dataset.s === stOf(c)));
+    $$('[data-stchip="' + id + '"]').forEach(x => { x.dataset.s = stOf(c); x.textContent = stLabel(c); });
+    save();
+  });
+
   // ---- Megosztás, törlés ----
   $('#share').addEventListener('click', async () => {
     const lines = ['Autónézés ' + T.date, ''];
     tripCars.forEach(c => {
       const d = T.everyCar.filter((_, i) => S.checks['car-' + c.id + '-' + i]).length;
-      lines.push(c.tag + ') ' + c.name + ' · ' + shortPrice(c.price));
+      lines.push(c.tag + ') ' + c.name + ' · ' + shortPrice(c.price) + ' · ' + stOf(c));
       lines.push('  Saját pont: ' + (S.scores[c.id] || '-') + ' · checklist: ' + d + '/' + T.everyCar.length);
       if (S.notes[c.id]) lines.push('  ' + S.notes[c.id].replace(/\n/g, '\n  '));
       lines.push('  ' + c.url, '');
@@ -535,7 +570,7 @@
   $('#reset').addEventListener('click', () => $('#resetconfirm').classList.add('show'));
   $('#resetno').addEventListener('click', () => $('#resetconfirm').classList.remove('show'));
   $('#resetyes').addEventListener('click', () => {
-    S = { checks: {}, notes: {}, scores: {}, slide: 0 }; save();
+    S = { checks: {}, notes: {}, scores: {}, status: {}, slide: 0 }; save();
     $('#resetconfirm').classList.remove('show');
     renderTrip(); renderList(); renderCmp(); initMap(); updateCounts(); trip.go(0, false);
   });

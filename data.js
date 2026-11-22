@@ -115,10 +115,18 @@ window.TRIP = {
   ]
 };
 
+// Státusz: 'új' | 'megnézendő' | 'felejtős' | 'törölt' (törölt = eladták vagy levették a hirdetést)
+window.STATUSES = [
+  { key: 'új', label: 'Új', hint: 'Most került be, még nem néztük át' },
+  { key: 'megnézendő', label: 'Megnézendő', hint: 'Érdemes élőben megnézni' },
+  { key: 'felejtős', label: 'Felejtős', hint: 'Nem érdekel' },
+  { key: 'törölt', label: 'Törölt', hint: 'Elkelt vagy levették a hirdetést' }
+];
+
 window.CARS = [
   // --- A hétfői kör autói ---
   {
-    id: '23651328', stop: 1, tag: '1A', color: 'fehér',
+    id: '23651328', status: 'megnézendő', added: '2026-11-22', stop: 1, tag: '1A', color: 'fehér',
     name: 'Hyundai Kona EV 64 kWh Premium, napfénytetős',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_premium_elektromos_napfenyteto-23651328',
     img: IMG('23651328', '33463777'),
@@ -131,7 +139,7 @@ window.CARS = [
     summary: 'Kevés km, a hirdetés szerint 100%-os akku, hőszivattyú, háromfázisú töltés és napfénytető. A gyári festékvastagságot rétegvastagság-mérővel érdemes ellenőrizni.'
   },
   {
-    id: '23651371', stop: 1, tag: '1B', color: 'szürke metál',
+    id: '23651371', status: 'megnézendő', added: '2026-11-22', stop: 1, tag: '1B', color: 'szürke metál',
     name: 'Hyundai Kona EV 64 kWh Premium',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_premium-23651371',
     img: IMG('23651371', '32842231'),
@@ -144,7 +152,7 @@ window.CARS = [
     summary: 'Teljes felszereltségű, de a 119e km sok, és az akku állapota nem ismert. Jó összehasonlítási alap a másik kettőhöz.'
   },
   {
-    id: '22735226', stop: 1, tag: '1C', color: 'kék metál',
+    id: '22735226', status: 'megnézendő', added: '2026-11-22', stop: 1, tag: '1C', color: 'kék metál',
     name: 'Hyundai Kona EV 64 kWh Premium',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_premium-22735226',
     img: IMG('22735226', '33539009'),
@@ -157,7 +165,7 @@ window.CARS = [
     summary: 'A legdrágább a listán, de a három helyi Kona közül ebben a legkevesebb a km, és ez a legjobban felszerelt. 2020 decemberben gyártották, 2021 augusztusában helyezték forgalomba: erre rá kell kérdezni.'
   },
   {
-    id: '23539209', stop: 2, tag: '2', color: '',
+    id: '23539209', status: 'megnézendő', added: '2026-11-22', stop: 2, tag: '2', color: '',
     name: 'Kia Soul EV 64 kWh Platinum',
     url: 'https://www.hasznaltauto.hu/szemelyauto/kia/soul/kia_soul_ev_64kwh_platinum_full_extra_meses_allapot_serulesmentes_eloelet-23539209',
     img: IMG('23539209', '31469000'),
@@ -170,7 +178,7 @@ window.CARS = [
     summary: 'A legfiatalabb Soul a listán, és ebben a legkevesebb a km. A 100%-os akku és a szervizkönyv egyelőre csak szóbeli állítás.'
   },
   {
-    id: '23693027', stop: 3, tag: '3', color: '',
+    id: '23693027', status: 'megnézendő', added: '2026-11-22', stop: 3, tag: '3', color: '',
     name: 'Hyundai Kona EV 64 kWh Executive',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_executive_hoszivattyu_elektromos_napfenyteto_ulesszelloztetes_futes_hud_krell_diag_s-23693027',
     img: IMG('23693027', '33362454'),
@@ -183,7 +191,7 @@ window.CARS = [
     summary: 'Alacsony km, márkaszervizben mért 100%-os akku, hőszivattyú, napfénytető. A hirdetés magyarországi első forgalomba helyezést jelöl, a szervizkönyv viszont holland előéletet mutat.'
   },
   {
-    id: '23629931', stop: 4, tag: '4', color: '',
+    id: '23629931', status: 'megnézendő', added: '2026-11-22', stop: 4, tag: '4', color: '',
     name: 'Hyundai Kona EV 64 kWh Executive',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_executive_led_navi_kamera_bor_ules_hutes-futes_hoszivattyu-23629931',
     img: IMG('23629931', '32579519'),
@@ -198,7 +206,7 @@ window.CARS = [
 
   // --- A körön kívüli autók ---
   {
-    id: '23447192', stop: null, tag: '', color: '',
+    id: '23447192', status: 'megnézendő', added: '2026-11-22', stop: null, tag: '', color: '',
     name: 'Kia Soul EV 64 kWh Platinum',
     url: 'https://www.hasznaltauto.hu/szemelyauto/kia/soul/kia_soul_ev_64kwh_platinum-23447192',
     img: IMG('23447192', '30353054'),
@@ -211,7 +219,7 @@ window.CARS = [
     summary: 'Korrekt ár. Az évjárat ellentmondásos (2020 vagy 2021), erre rá kell kérdezni. Érdemes megkérdezni, mennyibe került a csapágyjavítás.'
   },
   {
-    id: '23721894', stop: null, tag: '', color: '',
+    id: '23721894', status: 'megnézendő', added: '2026-11-22', stop: null, tag: '', color: '',
     name: 'Kia Soul EV 64 kWh Gold',
     url: 'https://www.hasznaltauto.hu/szemelyauto/kia/soul/kia_soul_ev_64kwh_gold_120e_km_-_magasan_felszerelt_-_head-up-23721894',
     img: IMG('23721894', '33745118'),
@@ -224,7 +232,7 @@ window.CARS = [
     summary: 'A legolcsóbb, de a legrégebbi is, és az akku állapota nem ismert. Messze van.'
   },
   {
-    id: '23727978', stop: null, tag: '', color: '',
+    id: '23727978', status: 'megnézendő', added: '2026-11-22', stop: null, tag: '', color: '',
     name: 'Hyundai Kona EV 64 kWh Premium',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_premium-23727978',
     img: IMG('23727978', '33807653'),
@@ -237,7 +245,7 @@ window.CARS = [
     summary: 'Fiatal, kevés km, magyarországi, márkaszervizes előélettel. A cellacsere után érdemes megnézni, és papírt kérni a cseréről.'
   },
   {
-    id: '23767563', stop: null, tag: '', color: '',
+    id: '23767563', status: 'megnézendő', added: '2026-11-22', stop: null, tag: '', color: '',
     name: 'Hyundai Kona EV 64 kWh Comfort (facelift)',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_comfort_serules_mentes_2_kulcs_uj_allapot_73.348_km_szervizkonyv_friss_szerviz-23767563',
     img: IMG('23767563', '34313436'),
@@ -250,7 +258,7 @@ window.CARS = [
     summary: 'A legfiatalabb autó, a legkevesebb km-rel, de nincs benne ülés- és kormányfűtés, a hőszivattyú sincs jelölve.'
   },
   {
-    id: '23439877', stop: null, tag: '', color: '',
+    id: '23439877', status: 'megnézendő', added: '2026-11-22', stop: null, tag: '', color: '',
     name: 'Kia Soul EV 64 kWh Platinum',
     url: 'https://www.hasznaltauto.hu/szemelyauto/kia/soul/kia_soul_ev_64kwh_platinum_kamera360-head_up-ulesfutes_szelloztetes_elol_hatul-gyorstoltes-bluelink-23439877',
     img: IMG('23439877', '30272783'),
@@ -263,7 +271,7 @@ window.CARS = [
     summary: '99%-os akku, első tulajdonos, jó ár, de sok km. Ugyanott van, mint a másik nagybaracskai.'
   },
   {
-    id: '23711007', stop: null, tag: '', color: '',
+    id: '23711007', status: 'megnézendő', added: '2026-11-22', stop: null, tag: '', color: '',
     name: 'Kia Soul EV 64 kWh Platinum',
     url: 'https://www.hasznaltauto.hu/szemelyauto/kia/soul/kia_soul_ev_64kwh_platinum-23711007',
     img: IMG('23711007', '33586739'),
