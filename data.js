@@ -13,6 +13,7 @@ window.TRIP = {
   dateLabel: 'hétfő, 2026. november 23.',
   summary: 'Indulás 12:00-kor Pilisvörösvárról · 4 megálló + 1 opcionális (XXIII.), 7 autó · kb. 151 km, kb. 3 óra vezetés · hazaérkezés kb. 17:45 (a 3B-vel kb. 18:15)',
   fullRoute: 'https://www.google.com/maps/dir/Pilisv%C3%B6r%C3%B6sv%C3%A1r/Solym%C3%A1r/2151+F%C3%B3t,+Erdei+s%C3%A9t%C3%A1ny+5/1182+Budapest,+Kir%C3%A1lyh%C3%A1g%C3%B3+utca+87/V%C3%B6r%C3%B6sk%C5%91+Aut%C3%B3+Biatorb%C3%A1gy/Pilisv%C3%B6r%C3%B6sv%C3%A1r',
+  fullRoute3B: 'https://www.google.com/maps/dir/Pilisv%C3%B6r%C3%B6sv%C3%A1r/Solym%C3%A1r/2151+F%C3%B3t,+Erdei+s%C3%A9t%C3%A1ny+5/1182+Budapest,+Kir%C3%A1lyh%C3%A1g%C3%B3+utca+87/1237+Budapest,+Maros+utca+204/V%C3%B6r%C3%B6sk%C5%91+Aut%C3%B3+Biatorb%C3%A1gy/Pilisv%C3%B6r%C3%B6sv%C3%A1r',
   notes: [
     'A menetidőkben 5–10 perc ráhagyás van.',
     '16:00 körül sötétedik, a 3. megálló végére és a 4. megállóra lámpa kell.',
