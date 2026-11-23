@@ -11,7 +11,7 @@ window.TRIP = {
   title: 'Autónézés',
   date: '2026-11-23',
   dateLabel: 'hétfő, 2026. november 23.',
-  summary: 'Indulás 12:00-kor Pilisvörösvárról · 4 megálló, 6 autó · kb. 151 km, kb. 3 óra vezetés · hazaérkezés kb. 17:45',
+  summary: 'Indulás 12:00-kor Pilisvörösvárról · 4 megálló + 1 opcionális (XXIII.), 7 autó · kb. 151 km, kb. 3 óra vezetés · hazaérkezés kb. 17:45 (a 3B-vel kb. 18:15)',
   fullRoute: 'https://www.google.com/maps/dir/Pilisv%C3%B6r%C3%B6sv%C3%A1r/Solym%C3%A1r/2151+F%C3%B3t,+Erdei+s%C3%A9t%C3%A1ny+5/1182+Budapest,+Kir%C3%A1lyh%C3%A1g%C3%B3+utca+87/V%C3%B6r%C3%B6sk%C5%91+Aut%C3%B3+Biatorb%C3%A1gy/Pilisv%C3%B6r%C3%B6sv%C3%A1r',
   notes: [
     'A menetidőkben 5–10 perc ráhagyás van.',
@@ -67,7 +67,7 @@ window.TRIP = {
       phone: '+36209147989', phoneLabel: '(+36) 20/914 7989',
       call: 'Érkezés kb. 15:05-kor',
       nav: NAV('1182 Budapest, Királyhágó utca 87'),
-      leg: '39 perc, 40 km (M0)',
+      leg: '12 perc, 8 km a 3B-hez (ha kihagyjátok: Biatorbágyig 39 perc, 40 km)',
       cars: ['23693027'],
       watch: [
         'Behozatal papírjai: eredetiségvizsga, magyar forgalomba helyezés dátuma',
@@ -78,7 +78,25 @@ window.TRIP = {
       ]
     },
     {
-      n: 4, time: '16:25–17:00', name: 'Biatorbágy',
+      n: '3B', optional: true, time: '15:55–16:20', name: 'Budapest XXIII. (opcionális)',
+      lat: 47.4153455, lon: 19.140513,
+      address: '1237 Budapest, Maros utca 204 · Szentlőrinci autóudvar',
+      who: 'Kereskedés · hétfőn 09:00-tól nyitva, a zárás nincs megadva',
+      phone: '+36302579196', phoneLabel: '(+36) 30/257 9196 (másik: 30/754 6079)',
+      call: 'Érkezés kb. 15:55-kor; kérdezd meg, meddig vannak nyitva',
+      nav: NAV('1237 Budapest, Maros utca 204'),
+      leg: '30 perc, 35 km Biatorbágyig (csúcsidőben inkább 40 perc)',
+      cars: ['23760912'],
+      watch: [
+        'Időkeret: legkésőbb 16:20-kor induljatok, Biatorbágy 17:00-kor zár; előtte szóljatok nekik, hogy kb. 16:55–17:05 között értek oda',
+        'SOH-kiolvasás és hőszivattyú (a hirdetés egyiket sem adja meg)',
+        'Bluelink: van-e a menüben; 2020-as autó, az ingyenes időszak valószínűleg lejárt',
+        'A kereskedő szerint egyetlen eleme sem volt fényezve: rétegvastagság-mérés',
+        'Első tulajdonos, magyar: szervizkönyv és alvázszám elkérése'
+      ]
+    },
+    {
+      n: 4, time: '16:25–17:00 (a 3B-vel kb. 16:55-től)', name: 'Biatorbágy',
       lat: 47.4694484, lon: 18.8834624,
       address: '2051 Biatorbágy, Budaörsi út vége, balra a murvás úton (a Premier Outlet fölött)',
       who: 'Vöröskő Autó (kereskedés) · hétfőn 17:00-ig',
@@ -290,7 +308,7 @@ window.CARS = [
 
   // --- 2026-11-22-én felvett új autók ---
   {
-    id: '23760912', status: 'új', added: '2026-11-22', stop: null, tag: '', color: 'ezüst metál',
+    id: '23760912', status: 'megnézendő', added: '2026-11-22', stop: '3B', tag: '3B', color: 'ezüst metál',
     name: 'Hyundai Kona EV 64 kWh Premium',
     url: 'https://www.hasznaltauto.hu/szemelyauto/hyundai/kona/hyundai_kona_ev_64kwh_premium_bor_3_fazis_ulesszelloztetes_krell-23760912',
     img: IMG('23760912', '34230734'),

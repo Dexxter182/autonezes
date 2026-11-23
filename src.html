@@ -222,6 +222,9 @@
     .slide { padding-left: max(16px, calc(50% - 320px)); padding-right: max(16px, calc(50% - 320px)); }
     .rows { max-width: 720px; margin: 0 auto; }
   }
+  .toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(10px); background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 650; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); text-align: center; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   /* ---- Tablet és desktop: fülek felül, Út = oldalsáv + kártya, Lista = lista + részletek ---- */
   .cars { display: block; }
   @media (min-width: 900px) {
@@ -485,7 +488,7 @@
   // ---- Út: diák ----
   const slides = [];
   slides.push({ key: 'start', label: T.start.time + ' Indulás', dot: 'S', html:
-    '<div class="hero"><div class="badge home">S</div><div><div class="time">' + esc(T.start.time) + '</div><h2>' + esc(T.start.name) + '</h2><div class="leg">4 állomás, 6 autó · kb. 151 km</div></div></div>' +
+    '<div class="hero"><div class="badge home">S</div><div><div class="time">' + esc(T.start.time) + '</div><h2>' + esc(T.start.name) + '</h2><div class="leg">4 állomás + 1 opcionális, 7 autó · kb. 151 km</div></div></div>' +
     '<div id="map" role="img" aria-label="Az útvonal térképe"><p>A térkép böngészőben jelenik meg. Az útvonalat a lenti gomb is megnyitja.</p></div>' +
     '<div class="actions"><a class="btn primary wide" href="' + T.fullRoute + '" target="_blank" rel="noopener">' + I.map + 'Teljes kör Google Mapsben</a></div>' +
     '<div class="warnbox"><h3>Tudnivalók</h3>' + T.notes.map(n => '<div style="font-size:14.5px;margin-top:4px">' + esc(n) + '</div>').join('') + '</div>' +
@@ -598,10 +601,11 @@
 
   // ---- Lapozás ----
   function deckCtl(deck, prev, next, labelOf, onChange) {
-    let cur = 0;
+    let cur = 0, busyUntil = 0;
     const count = () => deck.children.length;
     const go = (i, smooth = true) => {
       i = Math.max(0, Math.min(count() - 1, i));
+      busyUntil = Date.now() + (smooth ? 900 : 150); // a gombos/programozott lapozás közbeni görgetési eseményeket figyelmen kívül hagyjuk
       deck.scrollTo({ left: i * deck.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
       set(i);
     };
@@ -614,7 +618,7 @@
       onChange && onChange(i);
     };
     let t;
-    deck.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => set(Math.round(deck.scrollLeft / deck.clientWidth)), 60); }, { passive: true });
+    deck.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { if (Date.now() < busyUntil) return; set(Math.round(deck.scrollLeft / deck.clientWidth)); }, 80); }, { passive: true });
     prev.addEventListener('click', () => go(cur - 1));
     next.addEventListener('click', () => go(cur + 1));
     window.addEventListener('resize', () => go(cur, false));
@@ -625,7 +629,7 @@
     $$('#steps a').forEach(a => a.classList.toggle('on', +a.dataset.i === i));
     const on = $('#steps a.on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     if (i === 0 && map) setTimeout(() => map.invalidateSize(), 50);
-    S.slide = i; save();
+    S.slide = i; save(); record();
   });
   $('#steps').addEventListener('click', e => { const a = e.target.closest('a[data-i]'); if (!a) return; e.preventDefault(); trip.go(+a.dataset.i); });
 
@@ -638,16 +642,18 @@
     setMainTop();
     $('#carview').classList.add('open');
     if (!carCtl) carCtl = deckCtl($('#cardeck'), $('#carprev'), $('#carnext'), j => { const c = listCars()[j]; return (c.tag ? c.tag + ' ' : '') + c.name.replace(/(Hyundai|Kia) /, '').replace(' EV 64 kWh', ''); },
-      j => { carSel = j; $('#carpos').textContent = (j + 1) + ' / ' + listCars().length; markRow(j); });
-    requestAnimationFrame(() => { carCtl.go(i, false); carSel = i; markRow(i); $('#carpos').textContent = (i + 1) + ' / ' + listCars().length; });
+      j => { carSel = j; $('#carpos').textContent = (j + 1) + ' / ' + listCars().length; markRow(j); record(); });
+    // a clientWidth olvasása kikényszeríti az elrendezést, így rögtön a jó kártyára tudunk ugrani
+    void $('#cardeck').clientWidth;
+    carCtl.go(i, false); carSel = i; markRow(i); $('#carpos').textContent = (i + 1) + ' / ' + listCars().length; record();
   }
-  function closeCar() { $('#carview').classList.remove('open'); }
+  function closeCar() { $('#carview').classList.remove('open'); record(); }
   $('#rows').addEventListener('click', e => { const a = e.target.closest('[data-open]'); if (!a) return; e.preventDefault(); openCar(+a.dataset.open); });
   $('#carclose').addEventListener('click', () => { closeCar(); renderList(); });
   $('#filters').addEventListener('click', e => {
     const b = e.target.closest('button[data-f]'); if (!b) return;
     filter = b.dataset.f; renderList(); carSel = 0;
-    if (WIDE.matches) openCar(0);
+    if (WIDE.matches) openCar(0); else record();
   });
   const listActive = () => $('#view-list').classList.contains('active');
   WIDE.addEventListener('change', () => {
@@ -664,7 +670,41 @@
     if (v === 'list') { renderList(); if (WIDE.matches) openCar(Math.min(carSel, listCars().length - 1)); }
     else closeCar();
     if (v === 'trip') requestAnimationFrame(() => trip.go(trip.cur, false));
+    record();
   }
+
+  // ---- Vissza gomb: az appon belül lép vissza (fül, állomás, autó, szűrő) ----
+  let navReady = false, quietUntil = 0, backAt = 0;
+  const SID = Date.now(); // ehhez a megnyitáshoz tartozó bejegyzések; a korábbiakat (pl. újratöltés előttieket) nem állítjuk vissza
+  const curTab = () => ($('nav.tabs button.on') || { dataset: { v: 'trip' } }).dataset.v;
+  const snapshot = () => ({ sid: SID, v: curTab(), s: trip.cur, c: $('#carview').classList.contains('open') ? carSel : -1, f: filter });
+  function record() {
+    if (!navReady || Date.now() < quietUntil) return;
+    const st = snapshot(), h = history.state || {};
+    if (h.v === st.v && h.s === st.s && h.c === st.c && h.f === st.f) return;
+    try { history.pushState(st, ''); } catch (e) {}
+  }
+  function toast(text) {
+    let el = document.getElementById('toast');
+    if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = text; el.classList.add('show');
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+  window.addEventListener('popstate', e => {
+    const st = e.state;
+    if (!st || st.guard || st.sid !== SID) {
+      if (Date.now() - backAt < 2500) { history.back(); return; }
+      backAt = Date.now();
+      toast('A kilépéshez nyomd meg még egyszer a vissza gombot');
+      try { history.pushState(snapshot(), ''); } catch (err) {}
+      return;
+    }
+    quietUntil = Date.now() + 700;
+    if (st.f && st.f !== filter) { filter = st.f; carSel = 0; }
+    if (st.v === 'trip') trip.go(st.s, false); // előbb beállítjuk az állomást, a show() ezt görgeti be
+    show(st.v);
+    if (st.v === 'list') { if (st.c >= 0) openCar(st.c); else if (!WIDE.matches) $('#carview').classList.remove('open'); }
+  });
   $$('nav.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.v)));
   document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) show(g.dataset.goto); });
 
@@ -747,8 +787,13 @@
 
   startSync();
 
-  // utolsó állás visszaállítása
-  requestAnimationFrame(() => trip.go(S.slide || 0, false));
+  // utolsó állás visszaállítása, és egy „őr” bejegyzés az előzményekben, hogy a vissza gomb ne zárja be rögtön az appot
+  try { history.replaceState({ guard: true }, ''); history.pushState({ sid: SID, v: 'trip', s: S.slide || 0, c: -1, f: filter }, ''); } catch (e) {}
+  requestAnimationFrame(() => {
+    trip.go(S.slide || 0, false);
+    try { history.replaceState(snapshot(), ''); } catch (e) {}
+    navReady = true;
+  });
 })();
 </script>
 </body>
