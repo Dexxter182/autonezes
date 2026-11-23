@@ -223,6 +223,42 @@
     .slide { padding-left: max(16px, calc(50% - 320px)); padding-right: max(16px, calc(50% - 320px)); }
     .rows { max-width: 720px; margin: 0 auto; }
   }
+  /* ---- Tablet és desktop: fülek felül, Út = oldalsáv + kártya, Lista = lista + részletek ---- */
+  .cars { display: block; }
+  @media (min-width: 900px) {
+    .js header.top { order: -2; }
+    .js nav.tabs { order: -1; justify-content: center; gap: 4px; border-top: 0; border-bottom: 1px solid var(--line); padding: 0 16px; }
+    nav.tabs button { flex: 0 0 auto; flex-direction: row; gap: 8px; padding: 11px 22px; font-size: 14.5px; border-bottom: 3px solid transparent; }
+    nav.tabs button.on { border-bottom-color: var(--acc); }
+    nav.tabs button svg { width: 20px; height: 20px; }
+
+    .js #view-trip.active { display: grid; grid-template-columns: 290px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+    .js #steps { grid-column: 1; grid-row: 1 / 3; flex-direction: column; overflow-x: hidden; overflow-y: auto; padding: 16px; gap: 8px; border-right: 1px solid var(--line); }
+    .js .steps a { padding: 10px 12px; border-radius: 14px; font-size: 14.5px; white-space: normal; }
+    .js .steps a .dot { width: 30px; height: 30px; font-size: 13px; flex: none; }
+    .js #tripdeck { grid-column: 2; grid-row: 1; }
+    .js #tripbar { grid-column: 2; grid-row: 2; }
+    .js .slide { padding: 20px 32px 32px; }
+    .js .slide > .hero, .js .slide > .addr, .js .slide > .who, .js .slide > .actions, .js .slide > .warnbox, .js .slide > .panel, .js .slide > .sectionlabel, .js .slide > #map { max-width: 760px; }
+    .cars { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: start; margin-top: 12px; }
+    .cars > .carcard { margin-top: 0; }
+
+    .js #view-list .scroller { flex: none; width: 400px; border-right: 1px solid var(--line); }
+    .rows { max-width: none; }
+    .row.sel { border-color: var(--acc); box-shadow: inset 0 0 0 1px var(--acc); }
+    .js #carview { top: var(--maintop, 0px); left: 400px; z-index: 5; }
+    .js #carview .bar { background: var(--bg); color: var(--ink); padding: 10px 24px; border-bottom: 1px solid var(--line); }
+    .js #carview .bar .pos { text-align: left; color: var(--muted); }
+    .js #carview #carclose { display: none; }
+    .js #carview .slide { padding: 20px 32px 32px; }
+    .js #carview .stepbar { padding-bottom: 8px; }
+
+    .js #view-cmp .scroller { width: 100%; max-width: 1100px; margin: 0 auto; }
+  }
+  @media (min-width: 1300px) {
+    .js #carview .carcard { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; }
+    .js #carview .carcard .photo { aspect-ratio: 4 / 3; }
+  }
   @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 </style>
 </head>
@@ -469,7 +505,7 @@
       '<div class="actions"><a class="btn primary" href="' + s.nav + '" target="_blank" rel="noopener">' + I.nav + 'Navigáció</a><a class="btn" href="tel:' + s.phone + '">' + I.call + 'Hívás</a></div>' +
       '<div class="warnbox"><h3>Mire figyeljetek itt</h3><ul class="checks">' + s.watch.map((w, i) => check('stop-' + s.n + '-' + i, esc(w))).join('') + '</ul></div>' +
       '<div class="sectionlabel">' + (s.cars.length > 1 ? s.cars.length + ' autó ezen az állomáson' : 'Az autó') + '</div>' +
-      s.cars.map(id => carCard(byId[id], 'stop')).join('') });
+      '<div class="cars">' + s.cars.map(id => carCard(byId[id], 'stop')).join('') + '</div>' });
   });
   slides.push({ key: 'end', label: T.end.time.replace('~', 'kb. ') + ' Haza', dot: '⌂', html:
     '<div class="hero"><div class="badge home">⌂</div><div><div class="time">' + esc(T.end.time) + '</div><h2>' + esc(T.end.name) + '</h2><div class="leg">Biatorbágyról kb. 42 perc, 29 km</div></div></div>' +
@@ -594,26 +630,40 @@
   });
   $('#steps').addEventListener('click', e => { const a = e.target.closest('a[data-i]'); if (!a) return; e.preventDefault(); trip.go(+a.dataset.i); });
 
-  let carCtl;
+  // Széles képernyőn (tablet, desktop) a lista mellett mindig látszik a kiválasztott autó
+  const WIDE = window.matchMedia('(min-width: 900px)');
+  const setMainTop = () => document.documentElement.style.setProperty('--maintop', $('main').getBoundingClientRect().top + 'px');
+  let carCtl, carSel = 0;
+  function markRow(j) { $$('#rows [data-open]').forEach(a => a.classList.toggle('sel', +a.dataset.open === j)); }
   function openCar(i) {
+    setMainTop();
     $('#carview').classList.add('open');
     if (!carCtl) carCtl = deckCtl($('#cardeck'), $('#carprev'), $('#carnext'), j => { const c = listCars()[j]; return (c.tag ? c.tag + ' ' : '') + c.name.replace(/(Hyundai|Kia) /, '').replace(' EV 64 kWh', ''); },
-      j => { $('#carpos').textContent = (j + 1) + ' / ' + listCars().length; });
-    requestAnimationFrame(() => carCtl.go(i, false));
+      j => { carSel = j; $('#carpos').textContent = (j + 1) + ' / ' + listCars().length; markRow(j); });
+    requestAnimationFrame(() => { carCtl.go(i, false); carSel = i; markRow(i); $('#carpos').textContent = (i + 1) + ' / ' + listCars().length; });
   }
+  function closeCar() { $('#carview').classList.remove('open'); }
   $('#rows').addEventListener('click', e => { const a = e.target.closest('[data-open]'); if (!a) return; e.preventDefault(); openCar(+a.dataset.open); });
-  $('#carclose').addEventListener('click', () => { $('#carview').classList.remove('open'); renderList(); });
+  $('#carclose').addEventListener('click', () => { closeCar(); renderList(); });
   $('#filters').addEventListener('click', e => {
     const b = e.target.closest('button[data-f]'); if (!b) return;
-    filter = b.dataset.f; renderList();
+    filter = b.dataset.f; renderList(); carSel = 0;
+    if (WIDE.matches) openCar(0);
   });
+  const listActive = () => $('#view-list').classList.contains('active');
+  WIDE.addEventListener('change', () => {
+    setMainTop();
+    if (listActive()) { if (WIDE.matches) openCar(carSel); else closeCar(); }
+  });
+  window.addEventListener('resize', setMainTop);
 
   // ---- Fülek ----
   function show(v) {
     $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
     $$('main > .view').forEach(s => s.classList.toggle('active', s.id === 'view-' + v));
     if (v === 'cmp') renderCmp();
-    if (v === 'list') renderList();
+    if (v === 'list') { renderList(); if (WIDE.matches) openCar(Math.min(carSel, listCars().length - 1)); }
+    else closeCar();
     if (v === 'trip') requestAnimationFrame(() => trip.go(trip.cur, false));
   }
   $$('nav.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.v)));
