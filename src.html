@@ -224,6 +224,8 @@
   }
   .toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(10px); background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 650; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); text-align: center; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .ptr { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px); transform: translate(-50%, -60px); z-index: 3000; background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 8px 14px; border-radius: 999px; font-size: 13.5px; font-weight: 700; pointer-events: none; opacity: 0; white-space: nowrap; }
+  .ptr.ready { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
 
   /* ---- Tablet és desktop: fülek felül, Út = oldalsáv + kártya, Lista = lista + részletek ---- */
   .cars { display: block; }
@@ -786,6 +788,49 @@
   initMap();
 
   startSync();
+
+  // ---- Lehúzva frissítés ----
+  // Az app saját görgető területeket használ, ezért a Chrome beépített „húzd le” frissítése nem indul el; ez pótolja.
+  (function pullToRefresh() {
+    const ind = document.createElement('div');
+    ind.className = 'ptr'; ind.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(ind);
+    const LIMIT = 120;
+    let y0 = null, x0 = 0, dy = 0, decided = false;
+    const reset = () => { y0 = null; dy = 0; decided = false; ind.classList.remove('ready'); ind.style.opacity = 0; ind.style.transform = 'translate(-50%, -60px)'; };
+    document.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1 || e.target.closest('#map, textarea, input, .tablewrap')) return;
+      const sc = e.target.closest('.slide, .scroller');
+      if (sc && sc.scrollTop > 0) return;
+      y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; decided = false;
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (y0 === null) return;
+      const t = e.touches[0];
+      dy = t.clientY - y0;
+      const dx = t.clientX - x0;
+      if (!decided && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+        decided = true;
+        if (Math.abs(dx) > Math.abs(dy) || dy < 0) { reset(); return; } // oldalra lapozás vagy felfelé görgetés
+      }
+      if (dy <= 0) { ind.style.opacity = 0; return; }
+      const p = Math.min(dy / LIMIT, 1);
+      ind.style.opacity = p;
+      ind.style.transform = 'translate(-50%, ' + (-60 + p * 70) + 'px)';
+      ind.textContent = p >= 1 ? 'Engedd el a frissítéshez' : 'Húzd le a frissítéshez';
+      ind.classList.toggle('ready', p >= 1);
+    }, { passive: true });
+    document.addEventListener('touchend', () => {
+      if (y0 !== null && dy >= LIMIT) {
+        ind.textContent = 'Frissítés…';
+        flush();
+        setTimeout(() => location.reload(), 250);
+        return;
+      }
+      reset();
+    });
+    document.addEventListener('touchcancel', reset);
+  })();
 
   // utolsó állás visszaállítása, és egy „őr” bejegyzés az előzményekben, hogy a vissza gomb ne zárja be rögtön az appot
   try { history.replaceState({ guard: true }, ''); history.pushState({ sid: SID, v: 'trip', s: S.slide || 0, c: -1, f: filter }, ''); } catch (e) {}
